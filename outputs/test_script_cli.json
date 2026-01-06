@@ -1,0 +1,35 @@
+{
+  "hook": {
+    "text": "Wait... did you know about AI is Revolutionizing Healthcare?",
+    "duration": 2.0,
+    "visual_prompt": "Eye-catching visual related to AI is Revolutionizing Healthcare, vibrant colors, high contrast",
+    "text_overlay": "WAIT!"
+  },
+  "scenes": [
+    {
+      "narration": "AI is Revolutionizing Healthcare\n\nArtificial Intelligence is transforming the me",
+      "duration": 8.0,
+      "visual_prompt": "Visual representation of: AI is Revolutionizing Healthcare\n\nArtificial Intelligence is transforming the medical field in unprecedented ways, cinematic, vibrant",
+      "text_overlay": "AI is Revolutionizing Healthcare\n\nArtificial Intel"
+    },
+    {
+      "narration": "Key Points:\n- AI can diagnose diseases 40% faster than human doctors\n- Machine l",
+      "duration": 8.0,
+      "visual_prompt": "Visual representation of: Key Points:\n- AI can diagnose diseases 40% faster than human doctors\n- Machine learning predicts patient outcomes with 90% accuracy\n- Personalized treatment plans are created using patient data\n- Medical imaging analysis is now automated and more precise\n- Drug discovery is accelerated by AI-powered simulations\n\nThe future of healthcare is here, and it's powered by artificial intelligence, cinematic, vibrant",
+      "text_overlay": "Key Points:\n- AI can diagnose diseases 40% faster "
+    },
+    {
+      "narration": "From early disease detection to personalized medicine, AI is saving lives every ",
+      "duration": 8.0,
+      "visual_prompt": "Visual representation of: From early disease detection to personalized medicine, AI is saving lives every day, cinematic, vibrant",
+      "text_overlay": "From early disease detection to personalized medic"
+    },
+    {
+      "narration": "Follow for more insights!",
+      "duration": 3.0,
+      "visual_prompt": "Call to action visual, engaging, colorful",
+      "text_overlay": "FOLLOW FOR MORE!"
+    }
+  ],
+  "total_duration": 29.0
+}

@@ -16,7 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="ReelForge Contributors",
-    python_requires=">=3.10",
+    python_requires=">=3.9",
     packages=find_packages(),
     install_requires=[
         "mlx>=0.19.0",

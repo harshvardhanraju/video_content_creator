@@ -1,0 +1,35 @@
+{
+  "hook": {
+    "text": "Wait... did you know about AI Transforming Healthcare?",
+    "duration": 2.0,
+    "visual_prompt": "Eye-catching visual related to AI Transforming Healthcare, vibrant colors, high contrast",
+    "text_overlay": "WAIT!"
+  },
+  "scenes": [
+    {
+      "narration": "AI diagnoses diseases faster",
+      "duration": 5.0,
+      "visual_prompt": "Visual representation of: AI diagnoses diseases faster, cinematic, vibrant",
+      "text_overlay": "AI diagnoses diseases faster"
+    },
+    {
+      "narration": "Machine learning predicts outcomes",
+      "duration": 5.0,
+      "visual_prompt": "Visual representation of: Machine learning predicts outcomes, cinematic, vibrant",
+      "text_overlay": "Machine learning predicts outcomes"
+    },
+    {
+      "narration": "Personalized treatment plans",
+      "duration": 5.0,
+      "visual_prompt": "Visual representation of: Personalized treatment plans, cinematic, vibrant",
+      "text_overlay": "Personalized treatment plans"
+    },
+    {
+      "narration": "Follow for more insights!",
+      "duration": 3.0,
+      "visual_prompt": "Call to action visual, engaging, colorful",
+      "text_overlay": "FOLLOW FOR MORE!"
+    }
+  ],
+  "total_duration": 20.0
+}
