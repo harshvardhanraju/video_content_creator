@@ -20,6 +20,7 @@ from src.tts_generator.piper_tts import PiperTTS
 from src.image_generator.sd_generator import ImageGenerator
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
+from src.content_safety.safety_checker import ContentSafetyChecker
 
 
 @click.group()
@@ -125,6 +126,21 @@ def generate(input, output, length, voice, no_captions, save_intermediate, verbo
         if verbose:
             click.echo(f"   Scenes: {len(script['scenes']) + 1}")
             click.echo(f"   Duration: {script['total_duration']:.1f}s")
+
+        # Step 2.5: Content Safety Check
+        click.echo("🛡️  Checking content safety...")
+        safety_checker = ContentSafetyChecker(strict_mode=True)
+        is_safe, safety_report, safety_details = safety_checker.check_script(script)
+
+        if not is_safe:
+            click.echo(f"\n❌ Safety Check Failed!")
+            click.echo(safety_checker.get_safety_report(script))
+            click.echo("\nGeneration aborted due to safety concerns.")
+            click.echo("Please modify your input to remove inappropriate content.")
+            sys.exit(1)
+
+        if verbose:
+            click.echo(f"   {safety_report}")
 
         # Step 3: Generate Voiceover
         click.echo("🎙️  Step 3/5: Creating voiceover...")
