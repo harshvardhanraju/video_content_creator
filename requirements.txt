@@ -1,0 +1,47 @@
+# Core Dependencies
+python>=3.10
+
+# LLM and ML
+mlx>=0.19.0
+mlx-lm>=0.18.0
+torch>=2.0.0
+transformers>=4.35.0
+
+# Text-to-Speech
+piper-tts>=1.2.0
+pydub>=0.25.1
+
+# Image Generation
+diffusers>=0.25.0
+accelerate>=0.25.0
+safetensors>=0.4.0
+Pillow>=10.0.0
+
+# Video Processing
+moviepy>=1.0.3
+ffmpeg-python>=0.2.0
+opencv-python>=4.8.0
+
+# Utilities
+numpy>=1.24.0
+scipy>=1.11.0
+tqdm>=4.66.0
+click>=8.1.0
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+
+# PDF Processing (for paper inputs)
+PyPDF2>=3.0.0
+pdfplumber>=0.10.0
+
+# Markdown Processing
+markdown>=3.5.0
+beautifulsoup4>=4.12.0
+
+# Optional: Core ML for Apple Silicon optimization
+# coremltools>=7.0  # Uncomment if using Core ML SD
+
+# Development
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.1.0
