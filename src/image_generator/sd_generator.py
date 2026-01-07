@@ -50,9 +50,13 @@ class ImageGenerator:
 
         try:
             # Load with optimizations for Mac
+            # Note: Using float32 on MPS to avoid NaN issues with float16
+            torch_dtype = torch.float32 if self.device == "mps" else (
+                torch.float16 if self.device == "cuda" else torch.float32
+            )
             self.pipe = StableDiffusionPipeline.from_pretrained(
                 self.model_id,
-                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+                torch_dtype=torch_dtype,
                 safety_checker=None  # Disable for speed
             )
 

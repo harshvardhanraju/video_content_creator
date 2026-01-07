@@ -10,10 +10,16 @@ Generate engaging Instagram/YouTube Reels from text, topics, or research papersâ
 
 - **Input Flexibility:** Text prompts, topics, papers (PDF/MD), or markdown files
 - **AI-Powered Script Generation:** Hook-driven, viral-optimized scripts
-- **Natural Voiceovers:** High-quality text-to-speech
-- **Eye-Catching Visuals:** AI-generated images for each scene
+- **Voice Options:**
+  - High-quality text-to-speech (Piper TTS)
+  - Voice cloning from 6-second samples (Coqui XTTS v2)
+  - 17+ language support
+- **Dual Image Sources:**
+  - **Stock Images** (Pexels API) - Professional quality, instant results ðŸŒŸ **Recommended**
+  - **AI Generation** (Stable Diffusion) - Custom scenes, slower
 - **Professional Assembly:** Automated captions, transitions, and effects
-- **Privacy-First:** All processing on your Mac, no data sent to cloud
+- **Content Safety:** Built-in safety checks for all generated content
+- **Privacy-First:** Local processing (stock images require API key)
 - **Optimized for Apple Silicon:** M4 Mac Air (16GB RAM)
 
 ---
@@ -24,11 +30,23 @@ Generate engaging Instagram/YouTube Reels from text, topics, or research papersâ
 # Install dependencies
 pip install -r requirements.txt
 
-# Generate a reel
+# Set up Pexels API key (get free at https://www.pexels.com/api/)
+export PEXELS_API_KEY=your_api_key_here
+
+# Generate a reel with stock images (recommended)
 python -m src.cli.main generate --input "How AI is revolutionizing healthcare"
 
-# From a file
-python -m src.cli.main generate --input paper.md --length 60
+# With voice cloning (use your own voice!)
+python -m src.cli.main generate \
+    --input "Good morning everyone" \
+    --voice-sample my_voice.wav \
+    --image-source stock
+
+# From a file with AI-generated images
+python -m src.cli.main generate \
+    --input paper.md \
+    --length 60 \
+    --image-source ai
 ```
 
 ---
@@ -38,9 +56,10 @@ python -m src.cli.main generate --input paper.md --length 60
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Script Generation | Llama 3.2 (3B) via MLX | Create viral-optimized scripts |
-| Text-to-Speech | Piper TTS | Natural voiceovers |
-| Image Generation | Stable Diffusion 1.5 | Scene visuals |
+| Text-to-Speech | Piper TTS + Coqui XTTS v2 | Natural voiceovers + voice cloning |
+| Image Generation | Pexels API / Stable Diffusion 1.5 | Stock or AI-generated visuals |
 | Video Assembly | FFmpeg + MoviePy | Final reel production |
+| Content Safety | Custom filter system | Inappropriate content detection |
 
 ---
 
@@ -97,11 +116,21 @@ reelforge generate --input topic.txt --output my_reel.mp4
 
 ### Advanced Options
 ```bash
+# With voice cloning and stock images
 reelforge generate \
     --input research_paper.md \
     --length 60 \
-    --voice female \
-    --style vibrant \
+    --voice-sample my_voice.wav \
+    --tts-language en \
+    --image-source stock \
+    --pexels-api-key YOUR_KEY \
+    --save-intermediate \
+    --verbose
+
+# With AI-generated images (slower)
+reelforge generate \
+    --input topic.txt \
+    --image-source ai \
     --no-captions \
     --verbose
 ```

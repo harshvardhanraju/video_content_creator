@@ -30,6 +30,7 @@ tqdm>=4.66.0
 click>=8.1.0
 pyyaml>=6.0.0
 python-dotenv>=1.0.0
+requests>=2.31.0  # For stock image fetching
 
 # PDF Processing (for paper inputs)
 PyPDF2>=3.0.0

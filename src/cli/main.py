@@ -19,6 +19,7 @@ from src.script_generator.llm_generator import ScriptGenerator
 from src.tts_generator.piper_tts import PiperTTS
 from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
 from src.image_generator.sd_generator import ImageGenerator
+from src.image_generator.stock_image_fetcher import StockImageFetcher
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
 from src.content_safety.safety_checker import ContentSafetyChecker
@@ -68,6 +69,17 @@ def cli():
     help='Language for TTS (en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, ja, hu, ko, hi)'
 )
 @click.option(
+    '--image-source',
+    type=click.Choice(['stock', 'ai'], case_sensitive=False),
+    default='stock',
+    help='Image source: stock (Pexels API - faster, better) or ai (Stable Diffusion - slower)'
+)
+@click.option(
+    '--pexels-api-key',
+    envvar='PEXELS_API_KEY',
+    help='Pexels API key (get free at https://www.pexels.com/api/)'
+)
+@click.option(
     '--no-captions',
     is_flag=True,
     help='Disable caption overlay'
@@ -82,7 +94,7 @@ def cli():
     is_flag=True,
     help='Show detailed progress'
 )
-def generate(input, output, length, voice, voice_sample, tts_language, no_captions, save_intermediate, verbose):
+def generate(input, output, length, voice, voice_sample, tts_language, image_source, pexels_api_key, no_captions, save_intermediate, verbose):
     """
     Generate a viral reel from input.
 
@@ -179,9 +191,20 @@ def generate(input, output, length, voice, voice_sample, tts_language, no_captio
 
         # Step 4: Generate Images
         click.echo("🎨 Step 4/5: Generating scene images...")
-        image_gen = ImageGenerator()
         images_dir = temp_dir / "images"
-        image_paths = image_gen.generate_images(script, images_dir)
+
+        if image_source.lower() == 'stock':
+            click.echo("   Using stock images from Pexels...")
+            if not pexels_api_key:
+                click.echo("   ⚠️  No Pexels API key provided. Get one free at: https://www.pexels.com/api/")
+                click.echo("   Set PEXELS_API_KEY env var or use --pexels-api-key flag")
+                click.echo("   Falling back to placeholders...")
+            image_gen = StockImageFetcher(api_key=pexels_api_key)
+            image_paths = image_gen.fetch_images(script, images_dir)
+        else:
+            click.echo("   Using AI image generation (Stable Diffusion)...")
+            image_gen = ImageGenerator()
+            image_paths = image_gen.generate_images(script, images_dir)
 
         if verbose:
             click.echo(f"   Generated: {len(image_paths)} images")

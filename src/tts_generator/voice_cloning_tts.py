@@ -51,21 +51,27 @@ class VoiceCloningTTS:
                 return
 
             from TTS.api import TTS
-            from TTS.utils.manage import ModelManager
 
-            # Auto-agree to XTTS license by creating tos_agreed.txt file
+            # Auto-agree to XTTS license using environment variable
             # This bypasses the interactive prompt for non-commercial use
-            mm = ModelManager()
-            model_path = os.path.join(
-                mm.output_prefix,
-                "tts_models--multilingual--multi-dataset--xtts_v2"
-            )
-            os.makedirs(model_path, exist_ok=True)
-            tos_path = os.path.join(model_path, "tos_agreed.txt")
-            if not os.path.exists(tos_path):
+            os.environ['COQUI_TOS_AGREED'] = '1'
+
+            # Also try creating the agreement file in cache
+            try:
+                from TTS.utils.manage import ModelManager
+                mm = ModelManager()
+                model_path = os.path.join(
+                    mm.output_prefix,
+                    "tts_models--multilingual--multi-dataset--xtts_v2"
+                )
+                os.makedirs(model_path, exist_ok=True)
+                tos_path = os.path.join(model_path, "tos_agreed.txt")
                 with open(tos_path, "w", encoding="utf-8") as f:
                     f.write("I have read, understood and agreed to the Terms and Conditions.")
-                print("Auto-agreed to Coqui XTTS non-commercial license")
+            except Exception:
+                pass  # Fail silently if this doesn't work
+
+            print("Auto-agreed to Coqui XTTS non-commercial license")
 
             # Get device
             device = "cuda" if torch.cuda.is_available() else "cpu"
