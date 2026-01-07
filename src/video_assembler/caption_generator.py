@@ -132,18 +132,19 @@ class CaptionGenerator:
             border_color = "black"
 
         # Escape special characters for FFmpeg
-        text_escaped = text.replace("'", "\\'").replace(":", "\\:")
+        # Remove single quotes around text - they cause parsing issues
+        text_escaped = text.replace("'", "").replace(":", "\\:")
 
         filter_str = (
             f"drawtext=fontfile='{font_path}':"
-            f"text='{text_escaped}':"
+            f"text={text_escaped}:"
             f"fontsize={font_size}:"
             f"fontcolor={self.font_color}:"
             f"borderw={self.border_width}:"
             f"bordercolor={border_color}:"
             f"x=(w-text_w)/2:"
             f"y={y_pos}:"
-            f"enable='between(t,{start},{end})'"
+            f"enable=between(t\\,{start:.2f}\\,{end:.2f})"
         )
 
         return filter_str
