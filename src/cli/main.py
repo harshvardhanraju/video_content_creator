@@ -20,6 +20,7 @@ from src.tts_generator.piper_tts import PiperTTS
 from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
 from src.image_generator.sd_generator import ImageGenerator
 from src.image_generator.stock_image_fetcher import StockImageFetcher
+from src.image_generator.web_image_downloader import WebImageDownloader
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
 from src.content_safety.safety_checker import ContentSafetyChecker
@@ -70,9 +71,9 @@ def cli():
 )
 @click.option(
     '--image-source',
-    type=click.Choice(['stock', 'ai'], case_sensitive=False),
-    default='stock',
-    help='Image source: stock (Pexels API - faster, better) or ai (Stable Diffusion - slower)'
+    type=click.Choice(['web', 'stock', 'ai'], case_sensitive=False),
+    default='web',
+    help='Image source: web (free, no API key needed), stock (Pexels API), or ai (Stable Diffusion)'
 )
 @click.option(
     '--pexels-api-key',
@@ -193,7 +194,12 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
         click.echo("🎨 Step 4/5: Generating scene images...")
         images_dir = temp_dir / "images"
 
-        if image_source.lower() == 'stock':
+        if image_source.lower() == 'web':
+            click.echo("   Downloading images from web (Unsplash/Picsum)...")
+            click.echo("   No API key needed - completely free!")
+            image_gen = WebImageDownloader()
+            image_paths = image_gen.fetch_images(script, images_dir)
+        elif image_source.lower() == 'stock':
             click.echo("   Using stock images from Pexels...")
             if not pexels_api_key:
                 click.echo("   ⚠️  No Pexels API key provided. Get one free at: https://www.pexels.com/api/")
