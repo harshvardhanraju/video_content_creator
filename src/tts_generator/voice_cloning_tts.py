@@ -40,6 +40,15 @@ class VoiceCloningTTS:
     def _load_model(self):
         """Load Coqui XTTS v2 model."""
         try:
+            import sys
+
+            # Check Python version
+            if sys.version_info < (3, 10):
+                print(f"WARNING: Voice cloning requires Python 3.10+, you have {sys.version_info.major}.{sys.version_info.minor}")
+                print("Falling back to placeholder audio. Upgrade Python to use voice cloning.")
+                self.model = None
+                return
+
             from TTS.api import TTS
 
             # Get device
@@ -52,19 +61,22 @@ class VoiceCloningTTS:
 
             # Verify voice sample exists
             if not self.voice_sample_path.exists():
-                raise FileNotFoundError(
-                    f"Voice sample not found: {self.voice_sample_path}"
-                )
+                print(f"WARNING: Voice sample not found: {self.voice_sample_path}")
+                print("Falling back to placeholder audio.")
+                self.model = None
+                return
 
             print(f"Voice sample loaded: {self.voice_sample_path}")
 
-        except ImportError:
-            print("ERROR: Coqui TTS not installed!")
-            print("Install with: pip install TTS")
-            raise
+        except ImportError as e:
+            print(f"WARNING: Coqui TTS not installed properly: {e}")
+            print("Install with: pip install TTS (requires Python 3.10+)")
+            print("Falling back to placeholder audio.")
+            self.model = None
         except Exception as e:
-            print(f"Error loading XTTS v2 model: {e}")
-            raise
+            print(f"WARNING: Error loading XTTS v2 model: {e}")
+            print("Falling back to placeholder audio.")
+            self.model = None
 
     def generate_voiceover(self, script: Dict, output_path: Path) -> Path:
         """
@@ -82,6 +94,11 @@ class VoiceCloningTTS:
 
         # Combine all narration
         full_text = self._combine_narration(script)
+
+        # If model failed to load, fall back to placeholder
+        if self.model is None:
+            print("Voice cloning model not available, using placeholder audio")
+            return self._create_placeholder_audio(output_path, len(full_text))
 
         # Generate audio with XTTS v2
         temp_file = output_path.parent / "temp_voiceover.wav"

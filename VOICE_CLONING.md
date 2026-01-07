@@ -2,6 +2,8 @@
 
 ReelForge now supports voice cloning using Coqui XTTS v2! You can create reels with your own voice or any voice sample you provide.
 
+**IMPORTANT: Requires Python 3.10 or higher**
+
 ## Features
 
 - Clone any voice from just a 6-second audio sample
@@ -138,6 +140,15 @@ tts.generate_voiceover(script, output_path)
 | M4 Mac (16GB) | Excellent - runs on CPU efficiently |
 | CUDA GPU | Fast - automatic GPU acceleration |
 | CPU-only | Good - still usable, slightly slower |
+
+### System Requirements
+
+| Requirement | Minimum | Recommended |
+|------------|---------|-------------|
+| Python Version | 3.10 | 3.11+ |
+| RAM | 8GB | 16GB+ |
+| Storage | 5GB free | 10GB+ free |
+| OS | macOS 11+, Linux, Windows | macOS 13+, Ubuntu 22.04+ |
 
 ## Tips for Best Results
 
