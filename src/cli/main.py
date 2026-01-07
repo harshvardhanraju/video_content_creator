@@ -17,6 +17,7 @@ from src.input_processor.text_parser import TextParser
 from src.input_processor.pdf_parser import PDFParser
 from src.script_generator.llm_generator import ScriptGenerator
 from src.tts_generator.piper_tts import PiperTTS
+from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
 from src.image_generator.sd_generator import ImageGenerator
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
@@ -57,6 +58,16 @@ def cli():
     help='TTS voice model (default: en_US-lessac-medium)'
 )
 @click.option(
+    '--voice-sample',
+    type=click.Path(exists=True),
+    help='Path to voice sample for voice cloning (6+ seconds recommended)'
+)
+@click.option(
+    '--tts-language',
+    default='en',
+    help='Language for TTS (en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, ja, hu, ko, hi)'
+)
+@click.option(
     '--no-captions',
     is_flag=True,
     help='Disable caption overlay'
@@ -71,7 +82,7 @@ def cli():
     is_flag=True,
     help='Show detailed progress'
 )
-def generate(input, output, length, voice, no_captions, save_intermediate, verbose):
+def generate(input, output, length, voice, voice_sample, tts_language, no_captions, save_intermediate, verbose):
     """
     Generate a viral reel from input.
 
@@ -84,6 +95,10 @@ def generate(input, output, length, voice, no_captions, save_intermediate, verbo
         \b
         # From a file
         reelforge generate -i paper.md -l 60 -o my_reel.mp4
+
+        \b
+        # With voice cloning (use your own voice!)
+        reelforge generate -i topic.txt --voice-sample my_voice.wav --tts-language en
 
         \b
         # With options
@@ -144,8 +159,19 @@ def generate(input, output, length, voice, no_captions, save_intermediate, verbo
 
         # Step 3: Generate Voiceover
         click.echo("🎙️  Step 3/5: Creating voiceover...")
-        tts = PiperTTS(voice=voice, speed=1.2)
         audio_path = temp_dir / "voiceover.wav"
+
+        # Choose TTS engine based on whether voice cloning is requested
+        if voice_sample:
+            click.echo(f"   Using voice cloning with sample: {voice_sample}")
+            tts = VoiceCloningTTS(
+                voice_sample_path=voice_sample,
+                language=tts_language,
+                speed=1.2
+            )
+        else:
+            tts = PiperTTS(voice=voice, speed=1.2)
+
         tts.generate_voiceover(script, audio_path)
 
         # Get precise timings

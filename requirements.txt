@@ -10,6 +10,7 @@ transformers>=4.35.0
 # Text-to-Speech
 piper-tts>=1.2.0
 pydub>=0.25.1
+TTS>=0.22.0  # Coqui TTS for voice cloning
 
 # Image Generation
 diffusers>=0.25.0
