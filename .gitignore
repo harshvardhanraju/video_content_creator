@@ -22,6 +22,7 @@ wheels/
 
 # Virtual Environment
 venv/
+venv_py311/
 env/
 ENV/
 .venv
@@ -52,8 +53,14 @@ models/
 # Temporary files
 temp/
 tmp/
+.temp/
+intermediate/
 *.tmp
 *.log
+*.m4a
+*voice*.wav
+*voice*.mp4
+*test*.mp4
 
 # Environment variables
 .env
