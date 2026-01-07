@@ -89,7 +89,7 @@ class WebImageDownloader:
             response = requests.get(
                 unsplash_url,
                 headers=self.headers,
-                timeout=15,
+                timeout=30,
                 allow_redirects=True
             )
 
@@ -112,12 +112,23 @@ class WebImageDownloader:
             # Get a random image in the right dimensions
             picsum_url = "https://picsum.photos/1080/1920"
 
-            response = requests.get(
-                picsum_url,
-                headers=self.headers,
-                timeout=15,
-                allow_redirects=True
-            )
+            # Retry up to 3 times
+            for attempt in range(3):
+                try:
+                    response = requests.get(
+                        picsum_url,
+                        headers=self.headers,
+                        timeout=30,
+                        allow_redirects=True
+                    )
+                    if response.status_code == 200:
+                        break
+                except requests.Timeout:
+                    if attempt < 2:
+                        print(f"Timeout, retrying... ({attempt + 1}/3)")
+                        time.sleep(1)
+                        continue
+                    raise
 
             if response.status_code == 200:
                 self._download_and_process_image_from_content(
