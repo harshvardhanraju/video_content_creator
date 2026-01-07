@@ -137,11 +137,13 @@ Generate the script now:"""
                 json_str = response[json_start:json_end]
                 script = json.loads(json_str)
 
-                # Calculate total duration
-                total = script['hook']['duration']
+                # Calculate total duration (ensure all durations are floats)
+                total = float(script['hook']['duration'])
                 for scene in script['scenes']:
+                    scene['duration'] = float(scene['duration'])
                     total += scene['duration']
 
+                script['hook']['duration'] = float(script['hook']['duration'])
                 script['total_duration'] = total
                 return script
 
