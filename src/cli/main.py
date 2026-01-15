@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.input_processor.text_parser import TextParser
 from src.input_processor.pdf_parser import PDFParser
 from src.script_generator.llm_generator import ScriptGenerator
+from src.script_generator.research_script_generator import ResearchScriptGenerator
 from src.tts_generator.piper_tts import PiperTTS
 from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
 from src.image_generator.sd_generator import ImageGenerator
@@ -95,7 +96,18 @@ def cli():
     is_flag=True,
     help='Show detailed progress'
 )
-def generate(input, output, length, voice, voice_sample, tts_language, image_source, pexels_api_key, no_captions, save_intermediate, verbose):
+@click.option(
+    '--research',
+    is_flag=True,
+    help='Use web research for up-to-date, factual content (recommended for news/current events)'
+)
+@click.option(
+    '--style',
+    type=click.Choice(['informational', 'explainer', 'news', 'reaction'], case_sensitive=False),
+    default='informational',
+    help='Content style (default: informational)'
+)
+def generate(input, output, length, voice, voice_sample, tts_language, image_source, pexels_api_key, no_captions, save_intermediate, verbose, research, style):
     """
     Generate a viral reel from input.
 
@@ -144,16 +156,34 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
             click.echo(f"   Key points: {len(parsed_data['key_points'])}")
 
         # Step 2: Generate Script
-        click.echo("🤖 Step 2/5: Generating viral script...")
-        script_gen = ScriptGenerator()
-        script = script_gen.generate_script(parsed_data)
+        if research:
+            click.echo("🔬 Step 2/5: Researching topic and generating script...")
+            click.echo("   🌐 Searching web for latest information...")
+            script_gen = ResearchScriptGenerator()
+            script = script_gen.generate_script(
+                topic=parsed_data['title'],
+                target_length=length,
+                style=style,
+                include_sources=True
+            )
+            click.echo(f"   📊 Category: {script.get('category', 'general')}")
+            if 'sources' in script:
+                click.echo(f"   📚 Sources found: {len(script['sources'])}")
+        else:
+            click.echo("🤖 Step 2/5: Generating viral script...")
+            script_gen = ScriptGenerator()
+            script = script_gen.generate_script(parsed_data)
 
         script_path = temp_dir / "script.json"
         script_gen.save_script(script, script_path)
 
         if verbose:
-            click.echo(f"   Scenes: {len(script['scenes']) + 1}")
+            click.echo(f"   Scenes: {len(script['scenes'])}")
             click.echo(f"   Duration: {script['total_duration']:.1f}s")
+            if research and 'sources' in script:
+                click.echo("   Sources:")
+                for s in script['sources'][:3]:
+                    click.echo(f"     - {s['domain']}: {s['title'][:50]}...")
 
         # Step 2.5: Content Safety Check
         click.echo("🛡️  Checking content safety...")

@@ -48,7 +48,10 @@ class ContentSafetyChecker:
         # Allowed topics (even if they contain sensitive keywords)
         self.allowed_contexts = [
             "medical", "educational", "healthcare", "science",
-            "history", "documentary", "awareness", "prevention"
+            "history", "documentary", "awareness", "prevention",
+            # News and journalism contexts
+            "news", "report", "military", "operation", "president",
+            "government", "official", "announced", "capture", "arrest"
         ]
 
     def check_text(self, text: str) -> Tuple[bool, str, List[str]]:
