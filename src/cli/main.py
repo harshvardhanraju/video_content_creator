@@ -23,6 +23,7 @@ from src.image_generator.sd_generator import ImageGenerator
 from src.image_generator.stock_image_fetcher import StockImageFetcher
 from src.image_generator.web_image_downloader import WebImageDownloader
 from src.image_generator.smart_image_fetcher import SmartImageFetcher
+from src.image_generator.script_sd_generator import ScriptSDGenerator
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
 from src.content_safety.safety_checker import ContentSafetyChecker
@@ -73,9 +74,9 @@ def cli():
 )
 @click.option(
     '--image-source',
-    type=click.Choice(['smart', 'web', 'stock', 'ai'], case_sensitive=False),
+    type=click.Choice(['smart', 'web', 'stock', 'ai', 'generate', 'sdxl'], case_sensitive=False),
     default='smart',
-    help='Image source: smart (multi-API + CLIP matching), web (basic), stock (Pexels), or ai (Stable Diffusion)'
+    help='Image source: smart (multi-API + CLIP), web (basic), stock (Pexels), ai (SD basic), generate (script-aware SD), sdxl (high quality SD)'
 )
 @click.option(
     '--pexels-api-key',
@@ -248,8 +249,20 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
             image_gen = StockImageFetcher(api_key=pexels_api_key)
             image_paths = image_gen.fetch_images(script, images_dir)
         elif image_source.lower() == 'ai':
-            click.echo("   Using AI image generation (Stable Diffusion)...")
+            click.echo("   Using AI image generation (Stable Diffusion basic)...")
             image_gen = ImageGenerator()
+            image_paths = image_gen.generate_images(script, images_dir)
+        elif image_source.lower() == 'generate':
+            click.echo("   Using script-aware Stable Diffusion generation...")
+            click.echo(f"   Category: {script.get('category', 'default')}")
+            click.echo("   Generating contextually relevant images from prompts...")
+            image_gen = ScriptSDGenerator(model_type="sd15")
+            image_paths = image_gen.generate_images(script, images_dir)
+        elif image_source.lower() == 'sdxl':
+            click.echo("   Using SDXL for high-quality AI image generation...")
+            click.echo(f"   Category: {script.get('category', 'default')}")
+            click.echo("   Note: SDXL is slower but produces higher quality images")
+            image_gen = ScriptSDGenerator(model_type="sdxl")
             image_paths = image_gen.generate_images(script, images_dir)
         else:
             click.echo("   Using web images as fallback...")
