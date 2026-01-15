@@ -22,6 +22,7 @@ from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
 from src.image_generator.sd_generator import ImageGenerator
 from src.image_generator.stock_image_fetcher import StockImageFetcher
 from src.image_generator.web_image_downloader import WebImageDownloader
+from src.image_generator.smart_image_fetcher import SmartImageFetcher
 from src.video_assembler.compositor import VideoCompositor
 from src.video_assembler.caption_generator import CaptionGenerator
 from src.content_safety.safety_checker import ContentSafetyChecker
@@ -72,9 +73,9 @@ def cli():
 )
 @click.option(
     '--image-source',
-    type=click.Choice(['web', 'stock', 'ai'], case_sensitive=False),
-    default='web',
-    help='Image source: web (free, no API key needed), stock (Pexels API), or ai (Stable Diffusion)'
+    type=click.Choice(['smart', 'web', 'stock', 'ai'], case_sensitive=False),
+    default='smart',
+    help='Image source: smart (multi-API + CLIP matching), web (basic), stock (Pexels), or ai (Stable Diffusion)'
 )
 @click.option(
     '--pexels-api-key',
@@ -224,7 +225,16 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
         click.echo("🎨 Step 4/5: Generating scene images...")
         images_dir = temp_dir / "images"
 
-        if image_source.lower() == 'web':
+        if image_source.lower() == 'smart':
+            click.echo("   Using smart image search (multi-API + CLIP semantic matching)...")
+            click.echo("   Searching Unsplash, Pexels, Pixabay for best matches...")
+            image_gen = SmartImageFetcher(
+                pexels_api_key=pexels_api_key,
+                use_clip=True,
+                candidates_per_source=5
+            )
+            image_paths = image_gen.fetch_images(script, images_dir)
+        elif image_source.lower() == 'web':
             click.echo("   Downloading images from web (Unsplash/Picsum)...")
             click.echo("   No API key needed - completely free!")
             image_gen = WebImageDownloader()
@@ -237,10 +247,14 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
                 click.echo("   Falling back to placeholders...")
             image_gen = StockImageFetcher(api_key=pexels_api_key)
             image_paths = image_gen.fetch_images(script, images_dir)
-        else:
+        elif image_source.lower() == 'ai':
             click.echo("   Using AI image generation (Stable Diffusion)...")
             image_gen = ImageGenerator()
             image_paths = image_gen.generate_images(script, images_dir)
+        else:
+            click.echo("   Using web images as fallback...")
+            image_gen = WebImageDownloader()
+            image_paths = image_gen.fetch_images(script, images_dir)
 
         if verbose:
             click.echo(f"   Generated: {len(image_paths)} images")
