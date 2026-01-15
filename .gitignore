@@ -23,6 +23,7 @@ wheels/
 # Virtual Environment
 venv/
 venv_py311/
+venv_voice_clone/
 env/
 ENV/
 .venv

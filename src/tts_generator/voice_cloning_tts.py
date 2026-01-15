@@ -38,22 +38,45 @@ class VoiceCloningTTS:
         self._load_model()
 
     def _load_model(self):
-        """Load Coqui XTTS v2 model."""
+        """Load Coqui XTTS v2 model or configure subprocess mode."""
+        import sys
+        import os
+
+        # Check Python version
+        if sys.version_info < (3, 10):
+            print(f"WARNING: Voice cloning requires Python 3.10+, you have {sys.version_info.major}.{sys.version_info.minor}")
+            print("Falling back to placeholder audio. Upgrade Python to use voice cloning.")
+            self.model = None
+            self.use_subprocess = False
+            return
+
+        # Check if XTTS is available in current environment
         try:
-            import sys
+            from TTS.api import TTS
+            # If import succeeds, we're in the voice clone venv - use direct mode
+            self._load_model_direct()
+        except ImportError:
+            # Not in voice clone venv - use subprocess mode
+            print("TTS not available in current environment, using subprocess mode")
+            self.model = None
+            self.use_subprocess = True
+
+            # Verify voice clone venv exists
+            venv_path = Path(__file__).parent.parent.parent / "venv_voice_clone"
+            if not venv_path.exists():
+                print(f"WARNING: Voice clone environment not found at {venv_path}")
+                print("Voice cloning will not be available. Run setup script to create it.")
+                self.use_subprocess = False
+            else:
+                print(f"Voice cloning will use subprocess: {venv_path}")
+
+    def _load_model_direct(self):
+        """Load model directly (when in voice clone venv)."""
+        try:
             import os
-
-            # Check Python version
-            if sys.version_info < (3, 10):
-                print(f"WARNING: Voice cloning requires Python 3.10+, you have {sys.version_info.major}.{sys.version_info.minor}")
-                print("Falling back to placeholder audio. Upgrade Python to use voice cloning.")
-                self.model = None
-                return
-
             from TTS.api import TTS
 
             # Auto-agree to XTTS license using environment variable
-            # This bypasses the interactive prompt for non-commercial use
             os.environ['COQUI_TOS_AGREED'] = '1'
 
             # Also try creating the agreement file in cache
@@ -80,25 +103,26 @@ class VoiceCloningTTS:
             print("Loading XTTS v2 model (this may take a moment)...")
             self.model = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
             print(f"XTTS v2 model loaded on {device}")
+            self.use_subprocess = False
 
             # Verify voice sample exists
             if not self.voice_sample_path.exists():
                 print(f"WARNING: Voice sample not found: {self.voice_sample_path}")
                 print("Falling back to placeholder audio.")
                 self.model = None
-                return
 
-            print(f"Voice sample loaded: {self.voice_sample_path}")
-
-        except ImportError as e:
-            print(f"WARNING: Coqui TTS not installed properly: {e}")
-            print("Install with: pip install TTS (requires Python 3.10+)")
-            print("Falling back to placeholder audio.")
-            self.model = None
         except Exception as e:
-            print(f"WARNING: Error loading XTTS v2 model: {e}")
-            print("Falling back to placeholder audio.")
+            print(f"WARNING: Error loading XTTS v2 model directly: {e}")
+            print("Trying subprocess mode as fallback...")
             self.model = None
+            # Try subprocess mode as fallback
+            venv_path = Path(__file__).parent.parent.parent / "venv_voice_clone"
+            if venv_path.exists():
+                print(f"Voice cloning will use subprocess: {venv_path}")
+                self.use_subprocess = True
+            else:
+                print("Voice clone environment not found. Voice cloning unavailable.")
+                self.use_subprocess = False
 
     def generate_voiceover(self, script: Dict, output_path: Path) -> Path:
         """
@@ -117,12 +141,16 @@ class VoiceCloningTTS:
         # Combine all narration
         full_text = self._combine_narration(script)
 
+        # Use subprocess mode if configured
+        if hasattr(self, 'use_subprocess') and self.use_subprocess:
+            return self._generate_with_subprocess(full_text, output_path)
+
         # If model failed to load, fall back to placeholder
         if self.model is None:
             print("Voice cloning model not available, using placeholder audio")
             return self._create_placeholder_audio(output_path, len(full_text))
 
-        # Generate audio with XTTS v2
+        # Generate audio with XTTS v2 (direct mode)
         temp_file = output_path.parent / "temp_voiceover.wav"
 
         try:
@@ -150,6 +178,55 @@ class VoiceCloningTTS:
             print(f"Error generating voiceover: {e}")
             # Create a placeholder audio file as fallback
             return self._create_placeholder_audio(output_path, len(full_text))
+
+    def _generate_with_subprocess(self, text: str, output_path: Path) -> Path:
+        """Generate voiceover using subprocess (separate venv)."""
+        print("Generating voiceover using subprocess mode...")
+
+        # Get paths
+        project_root = Path(__file__).parent.parent.parent
+        venv_python = project_root / "venv_voice_clone" / "bin" / "python3"
+        subprocess_script = project_root / "src" / "tts_generator" / "voice_clone_subprocess.py"
+
+        # Verify voice sample exists
+        if not self.voice_sample_path.exists():
+            print(f"WARNING: Voice sample not found: {self.voice_sample_path}")
+            return self._create_placeholder_audio(output_path, len(text))
+
+        try:
+            # Call voice cloning subprocess
+            cmd = [
+                str(venv_python),
+                str(subprocess_script),
+                "--text", text,
+                "--voice-sample", str(self.voice_sample_path),
+                "--output", str(output_path),
+                "--language", self.language
+            ]
+
+            print(f"Running: {' '.join(cmd[:3])} ...")
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=180  # 3 minute timeout
+            )
+
+            if result.returncode == 0:
+                print(result.stdout)
+                print(f"✓ Voice cloning successful: {output_path}")
+                return output_path
+            else:
+                print(f"Voice cloning subprocess failed:")
+                print(result.stderr)
+                return self._create_placeholder_audio(output_path, len(text))
+
+        except subprocess.TimeoutExpired:
+            print("ERROR: Voice cloning subprocess timed out")
+            return self._create_placeholder_audio(output_path, len(text))
+        except Exception as e:
+            print(f"ERROR: Failed to run voice cloning subprocess: {e}")
+            return self._create_placeholder_audio(output_path, len(text))
 
     def _combine_narration(self, script: Dict) -> str:
         """Combine all narration from script."""
