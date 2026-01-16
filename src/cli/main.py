@@ -19,6 +19,7 @@ from src.script_generator.llm_generator import ScriptGenerator
 from src.script_generator.research_script_generator import ResearchScriptGenerator
 from src.tts_generator.piper_tts import PiperTTS
 from src.tts_generator.voice_cloning_tts import VoiceCloningTTS
+from src.tts_generator.neutts_voice_cloning import NeuTTSVoiceCloning
 from src.image_generator.sd_generator import ImageGenerator
 from src.image_generator.stock_image_fetcher import StockImageFetcher
 from src.image_generator.web_image_downloader import WebImageDownloader
@@ -73,6 +74,18 @@ def cli():
     help='Language for TTS (en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, ja, hu, ko, hi)'
 )
 @click.option(
+    '--tts-engine',
+    type=click.Choice(['piper', 'xtts', 'neutts'], case_sensitive=False),
+    default='piper',
+    help='TTS engine: piper (fast), xtts (XTTS v2 voice cloning), neutts (NeuTTS instant cloning)'
+)
+@click.option(
+    '--neutts-model',
+    type=click.Choice(['nano', 'micro', 'air'], case_sensitive=False),
+    default='nano',
+    help='NeuTTS model size: nano (fastest), micro, air (best quality)'
+)
+@click.option(
     '--image-source',
     type=click.Choice(['smart', 'web', 'stock', 'ai', 'generate', 'sdxl'], case_sensitive=False),
     default='smart',
@@ -109,7 +122,7 @@ def cli():
     default='informational',
     help='Content style (default: informational)'
 )
-def generate(input, output, length, voice, voice_sample, tts_language, image_source, pexels_api_key, no_captions, save_intermediate, verbose, research, style):
+def generate(input, output, length, voice, voice_sample, tts_language, tts_engine, neutts_model, image_source, pexels_api_key, no_captions, save_intermediate, verbose, research, style):
     """
     Generate a viral reel from input.
 
@@ -206,15 +219,28 @@ def generate(input, output, length, voice, voice_sample, tts_language, image_sou
         click.echo("🎙️  Step 3/5: Creating voiceover...")
         audio_path = temp_dir / "voiceover.wav"
 
-        # Choose TTS engine based on whether voice cloning is requested
-        if voice_sample:
-            click.echo(f"   Using voice cloning with sample: {voice_sample}")
+        # Choose TTS engine based on --tts-engine option
+        if tts_engine.lower() == 'neutts':
+            click.echo(f"   Using NeuTTS ({neutts_model}) for voice synthesis...")
+            if voice_sample:
+                click.echo(f"   Voice cloning from: {voice_sample}")
+            tts = NeuTTSVoiceCloning(
+                voice_sample_path=voice_sample,
+                model_size=neutts_model,
+                device="cpu",  # MPS via llama-cpp-python
+                speed=1.2
+            )
+        elif tts_engine.lower() == 'xtts' or voice_sample:
+            click.echo(f"   Using XTTS v2 for voice cloning...")
+            if voice_sample:
+                click.echo(f"   Voice sample: {voice_sample}")
             tts = VoiceCloningTTS(
                 voice_sample_path=voice_sample,
                 language=tts_language,
                 speed=1.2
             )
         else:
+            click.echo(f"   Using Piper TTS (fast synthesis)...")
             tts = PiperTTS(voice=voice, speed=1.2)
 
         tts.generate_voiceover(script, audio_path)
